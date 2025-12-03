@@ -31,8 +31,9 @@ func (w *Worker) Mail(ctx context.Context, usersList []models.User, msg bot.Send
 	for _, user := range usersList {
 		<-t.C
 		msg.ChatID = user.TgID
+		log.Println(user)
 		if _, err := w.bot.SendMessage(ctx, &msg); err != nil {
-			// тут обпаботчик на заблокированность бота
+			// тут обработчик на заблокированность бота
 			log.Println("[MAILER]", err)
 			continue
 		}

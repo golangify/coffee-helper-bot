@@ -9,11 +9,12 @@ import (
 
 	"coffee-helper/models"
 	"coffee-helper/renderers/bot"
+	"coffee-helper/renderers/user"
 )
 
 type Renderers struct {
 	Bot     *bot.Renderer
-	User    any
+	User    *user.Renderer
 	Menu    any
 	Product any
 	Search  any
@@ -26,7 +27,8 @@ func New(templateFS embed.FS) (*Renderers, error) {
 	}
 
 	r := &Renderers{
-		Bot: bot.New(templates),
+		Bot:  bot.New(templates),
+		User: user.New(templates),
 	}
 
 	return r, nil

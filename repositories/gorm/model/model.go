@@ -84,7 +84,7 @@ func (m *Model[T]) ByColumnContains(column string, substrs []string) (*T, error)
 		querySubstrs[i] = fmt.Sprintf("%%%s%%", substr)
 	}
 	var result T
-	if err := m.db.Model(new(T)).Where(queryString, querySubstrs).First(&result).Error; err != nil {
+	if err := m.db.Model(new(T)).Where(queryString, querySubstrs...).First(&result).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -101,7 +101,7 @@ func (m *Model[T]) ByColumnContainsList(column string, substrs []string, offset 
 		querySubstrs[i] = fmt.Sprintf("%%%s%%", substr)
 	}
 	var results []T
-	if err := m.db.Model(new(T)).Where(queryString, querySubstrs...).Offset(offset).Limit(limit).Find(&results).Error; err != nil {
+	if err := m.db.Debug().Model(new(T)).Where(queryString, querySubstrs...).Offset(offset).Limit(limit).Find(&results).Error; err != nil {
 		return nil, err
 	}
 	return results, nil

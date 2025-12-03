@@ -43,7 +43,7 @@ func (c *Controller) apanel(ctx context.Context, b *bot.Bot, update *botmodels.U
 	}); err != nil {
 		panic(err)
 	}
-	apanelMessage, err := b.SendMessage(ctx, c.renderers.Bot.Message.Apanel(
+	apanelMessage, err := b.SendMessage(ctx, c.renderers.User.Message.Apanel(
 		c.middleware.SentFrom(ctx),
 		c.middleware.GetUser(ctx),
 	))

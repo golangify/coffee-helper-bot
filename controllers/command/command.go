@@ -109,7 +109,7 @@ func (c *Controller) getaccess(ctx context.Context, b *bot.Bot, update *botmodel
 	}
 
 	if err := c.workers.Mailer.Admins(ctx, bot.SendMessageParams{
-		Text: fmt.Sprintf("%v (TODO) запрашивает доступ к боту.", *user),
+		Text: fmt.Sprintf("%s запрашивает доступ к боту.", user.String()),
 	}); err != nil {
 		panic(err)
 	}

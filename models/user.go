@@ -3,6 +3,7 @@ package models
 import (
 	"coffee-helper/models/flags"
 	"gorm.io/gorm"
+	"strings"
 )
 
 const (
@@ -50,4 +51,16 @@ func (u *User) RolesRu() []string {
 		res = append(res, UserFlagTitle[string(flag)])
 	}
 	return res
+}
+
+func (u *User) String() string {
+	var b strings.Builder
+	b.WriteString(u.FirstName)
+	if u.LastName != "" {
+		b.WriteString(" " + u.LastName)
+	}
+	if u.Username != "" {
+		b.WriteString(" (@" + u.Username + ")")
+	}
+	return b.String()
 }

@@ -53,7 +53,7 @@ func (s *Service) AdminsList(page int) (*UsersList, error) {
 		return nil, err
 	}
 
-	pagination, limit, offset := pagination.Paginate(page, s.config.ItemsPerPage, totalAdmins)
+	pagination, offset, limit := pagination.Paginate(page, s.config.ItemsPerPage, totalAdmins)
 
 	admins, err := s.repositories.User.ByColumnContainsList("flags", []string{models.FlagUserAdmin}, offset, limit)
 	if err != nil {

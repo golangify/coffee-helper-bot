@@ -30,40 +30,20 @@ func (r *Renderer) Start(sentFrom *botmodels.User, user *models.User) *bot.SendM
 	}); err != nil {
 		panic(err)
 	}
+	true_ := true
 	msg := &bot.SendMessageParams{
 		ChatID:    sentFrom.ID,
 		Text:      msgTextBuffer.String(),
 		ParseMode: "html",
+		LinkPreviewOptions: &botmodels.LinkPreviewOptions{
+			IsDisabled: &true_,
+		},
 		ReplyMarkup: botmodels.ReplyKeyboardMarkup{
 			Keyboard: [][]botmodels.KeyboardButton{
 				{{Text: "Меню"}},
 				{{Text: "Действия"}},
 			},
 			ResizeKeyboard: true,
-		},
-	}
-
-	return msg
-}
-
-func (r *Renderer) Apanel(sentFrom *botmodels.User, user *models.User) *bot.SendMessageParams {
-	msgTextBuffer := bytes.NewBuffer(nil)
-	if err := r.templates.ExecuteTemplate(msgTextBuffer, "apanel", map[string]any{
-		"sentfrom": sentFrom,
-		"user":     user,
-	}); err != nil {
-		panic(err)
-	}
-	msg := &bot.SendMessageParams{
-		ChatID:    sentFrom.ID,
-		Text:      msgTextBuffer.String(),
-		ParseMode: "html",
-		ReplyMarkup: botmodels.InlineKeyboardMarkup{
-			InlineKeyboard: [][]botmodels.InlineKeyboardButton{
-				{{Text: "Список пользователей", CallbackData: "listUserCategories"}},
-				{{Text: "Добавить администратора", CallbackData: "newAdminInvite"}},
-				{{Text: "❌ (закрыть)", CallbackData: "deleteMessage"}},
-			},
 		},
 	}
 
