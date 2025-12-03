@@ -1,0 +1,8 @@
+l{{ define "getacess" }}
+<b>Выдача роли «{{ userFlagTitle .roleIssue.RoleFlag }}»</b>
+
+Пользователь, которому выдаётся роль должен отправить мне эту команду:
+<code>/roleissue{{ .roleIssue.Secret }}</code>
+
+<i>Это одноразовая команда — используйте её один раз для выдачи роли.</i>
+{{ end }}
