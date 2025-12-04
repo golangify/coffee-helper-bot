@@ -13,8 +13,6 @@ import (
 
 const CancelCommand = "/cancel"
 
-const KeyCtxUser = "user"
-
 const (
 	TypeStepAny uint8 = iota
 	TypeStepText
@@ -76,16 +74,28 @@ func (h *StepHandler) Register(ctx context.Context, b *bot.Bot, user *models.Use
 	return s, nil
 }
 
-func (s *Step) checkTypeMatch(update *botmodels.Update) error {
+func (h *StepHandler) checkTypeMatch(update *botmodels.Update, s *Step) error {
 	if s.Type == TypeStepAny {
 		return nil
 	}
-	if s.Type == TypeStepText && (update.Message == nil || update.Message.Text == "") {
-		return fmt.Errorf("ожидалось сообщение с текстом")
+
+	if s.Type == TypeStepText {
+		if update.Message == nil || update.Message.Text == "" {
+			return fmt.Errorf("ожидалось сообщение с текстом")
+		}
+		return nil
 	}
-	if s.Type == TypeStepImage && (update.Message == nil || len(update.Message.Photo) == 0) {
-		return fmt.Errorf("ожидалось изображение")
+
+	if s.Type == TypeStepImage {
+		if update.Message == nil || len(update.Message.Photo) == 0 {
+			return fmt.Errorf("ожидалось сообщение с изображением")
+		}
+		return nil
 	}
+
+	h.mu.Lock()
+	delete(h.handlers, s.User.ID)
+	h.mu.Unlock()
 	return fmt.Errorf("неизвестный тип обработчика: %d", s.Type)
 }
 
@@ -106,27 +116,33 @@ func (h *StepHandler) Middleware() bot.Middleware {
 			if update.Message != nil &&
 				update.Message.Text == CancelCommand {
 				if step.NonCancellable {
-					b.SendMessage(ctx, &bot.SendMessageParams{
+					if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 						ChatID: user.TgID,
-						Text:   "Действие неотменяемое",
-					})
+						Text:   "Действие нельзя отменить",
+					}); err != nil {
+						panic(err)
+					}
 					return
 				}
 				h.mu.Lock()
 				delete(h.handlers, user.ID)
 				h.mu.Unlock()
-				b.SendMessage(ctx, &bot.SendMessageParams{
+				if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 					ChatID: user.TgID,
 					Text:   "Действие отменено",
-				})
+				}); err != nil {
+					panic(err)
+				}
 				return
 			}
 
-			if err := step.checkTypeMatch(update); err != nil {
-				b.SendMessage(ctx, &bot.SendMessageParams{
+			if err := h.checkTypeMatch(update, step); err != nil {
+				if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 					ChatID: user.TgID,
-					Text:   err.Error(),
-				})
+					Text:   fmt.Errorf("Ошибка в StepHandler.checkTypeMatch: %v", err).Error(),
+				}); err != nil {
+					panic(err)
+				}
 				return
 			}
 
@@ -135,7 +151,6 @@ func (h *StepHandler) Middleware() bot.Middleware {
 			h.mu.Unlock()
 
 			step.Func(ctx, b, update, user, step.Args)
-
 		}
 	}
 }

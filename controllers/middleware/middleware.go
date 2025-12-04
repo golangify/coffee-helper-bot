@@ -125,7 +125,7 @@ func (c *Controller) Common(next bot.HandlerFunc) bot.HandlerFunc {
 // проверка на админ права
 func (c *Controller) Admin(next bot.HandlerFunc) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *botmodels.Update) {
-		if c.GetUser(ctx).Flags.Has(models.FlagUserAdmin) {
+		if c.GetUser(ctx).IsAdmin() {
 			next(ctx, b, update)
 		} else {
 			b.SendMessage(ctx, c.renderers.Bot.Error.Message.Error(c.SentFrom(ctx), "для этого действия у вас должна быть роль администратора"))
@@ -136,8 +136,8 @@ func (c *Controller) Admin(next bot.HandlerFunc) bot.HandlerFunc {
 // проверка на права редактора
 func (c *Controller) Editor(next bot.HandlerFunc) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *botmodels.Update) {
-		userFlags := c.GetUser(ctx).Flags
-		if userFlags.Has(models.FlagUserAdmin) || userFlags.Has(models.FlagUserEditor) {
+		user := c.GetUser(ctx)
+		if user.IsAdmin() || user.IsEditor() {
 			next(ctx, b, update)
 		} else {
 			b.SendMessage(ctx, c.renderers.Bot.Error.Message.Error(c.SentFrom(ctx), "для этого действия у вас должна быть роль редактора"))
@@ -148,8 +148,8 @@ func (c *Controller) Editor(next bot.HandlerFunc) bot.HandlerFunc {
 // проверка на права обычного сотрудника
 func (c *Controller) Staff(next bot.HandlerFunc) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *botmodels.Update) {
-		userFlags := c.GetUser(ctx).Flags
-		if userFlags.Has(models.FlagUserAdmin) || userFlags.Has(models.FlagUserEditor) || userFlags.Has(models.FlagUserStaff) {
+		user := c.GetUser(ctx)
+		if user.IsAdmin() || user.IsEditor() || user.IsStaff() {
 			next(ctx, b, update)
 		} else {
 			b.SendMessage(ctx, c.renderers.Bot.Error.Message.Error(c.SentFrom(ctx), "для этого действия у вас должна быть роль сотрудника"))
