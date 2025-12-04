@@ -10,6 +10,7 @@ import (
 	"coffee-helper/config"
 	"coffee-helper/controllers/command/admin"
 	"coffee-helper/controllers/middleware"
+	"coffee-helper/controllers/stephandler"
 	"coffee-helper/renderers"
 	"coffee-helper/services"
 	"coffee-helper/workers"
@@ -30,22 +31,24 @@ var (
 )
 
 type Controller struct {
-	services   *services.Services
-	workers    *workers.Workers
-	middleware *middleware.Controller
-	renderers  *renderers.Renderers
+	services    *services.Services
+	workers     *workers.Workers
+	middleware  *middleware.Controller
+	stephandler *stephandler.StepHandler
+	renderers   *renderers.Renderers
 
 	// TODO: переписать на sync.Map
 	recentAccessRequests map[uint]time.Time
 	mu                   sync.Mutex
 }
 
-func New(config *config.Config, b *bot.Bot, services *services.Services, workers *workers.Workers, middleware *middleware.Controller, renderers *renderers.Renderers) *Controller {
+func New(config *config.Config, b *bot.Bot, services *services.Services, workers *workers.Workers, middleware *middleware.Controller, stephandler *stephandler.StepHandler, renderers *renderers.Renderers) *Controller {
 	c := &Controller{
-		services:   services,
-		workers:    workers,
-		middleware: middleware,
-		renderers:  renderers,
+		services:    services,
+		workers:     workers,
+		middleware:  middleware,
+		stephandler: stephandler,
+		renderers:   renderers,
 
 		recentAccessRequests: make(map[uint]time.Time),
 	}
@@ -54,6 +57,8 @@ func New(config *config.Config, b *bot.Bot, services *services.Services, workers
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/help", bot.MatchTypeExact, c.help)
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/getaccess", bot.MatchTypeExact, c.getaccess)
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/roleissue", bot.MatchTypePrefix, c.getaccess)
+
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/test", bot.MatchTypeExact, c.test)
 
 	_ = admin.New(config, b, middleware, renderers)
 
@@ -137,8 +142,31 @@ func (c *Controller) roleissue(ctx context.Context, b *bot.Bot, update *botmodel
 
 	if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: roleIssue.Initiator.ID,
-		Text:   fmt.Sprintf("Роль «%s» успешно выдана %v(TODO отрисовать юзера)", models.UserFlagTitle[roleIssue.RoleFlag], user),
+		Text:   fmt.Sprintf("Роль «%s» успешно выдана пользователю %s", models.UserFlagTitle[roleIssue.RoleFlag], user.String()),
 	}); err != nil {
 		panic(err)
+	}
+	if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: user.TgID,
+		Text:   fmt.Sprintf("Теперь у вас есть роль «%s»", models.UserFlagTitle[roleIssue.RoleFlag]),
+	}); err != nil {
+		panic(err)
+	}
+
+}
+
+func (c *Controller) test(ctx context.Context, b *bot.Bot, update *botmodels.Update) {
+	if sh, err := c.stephandler.Register(ctx, b, c.middleware.GetUser(ctx), stephandler.TypeStepText, false,
+		func(ctx context.Context, b *bot.Bot, update *botmodels.Update, user *models.User, args map[string]any) {
+			if _, err := b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: user.TgID,
+				Text:   fmt.Sprintf("успех. args: %v", args),
+			}); err != nil {
+				panic(err)
+			}
+		}, map[string]any{"abc": "def"}); err != nil {
+		panic(err)
+	} else {
+		fmt.Println(sh)
 	}
 }

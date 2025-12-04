@@ -10,6 +10,7 @@ import (
 	"coffee-helper/config"
 	"coffee-helper/controllers"
 	"coffee-helper/controllers/middleware"
+	"coffee-helper/controllers/stephandler"
 	"coffee-helper/renderers"
 	"coffee-helper/repositories/gorm"
 	"coffee-helper/services"
@@ -49,8 +50,11 @@ func main() {
 	// init middleware
 	midware := middleware.New(cfg, servs, rendrs)
 
+	// init stephandler
+	stephandler := stephandler.New(midware, rendrs)
+
 	// init bot
-	bot, err := bot.New(cfg.TelegramAPIToken, bot.WithMiddlewares(midware.Common))
+	bot, err := bot.New(cfg.TelegramAPIToken, bot.WithMiddlewares(midware.Common, stephandler.Middleware()))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -59,7 +63,7 @@ func main() {
 	wrkrs := workers.New(bot, servs)
 
 	// init controllers
-	if _, err := controllers.New(cfg, bot, servs, wrkrs, midware, rendrs); err != nil {
+	if _, err := controllers.New(cfg, bot, servs, wrkrs, midware, stephandler, rendrs); err != nil {
 		log.Fatalln(err)
 	}
 

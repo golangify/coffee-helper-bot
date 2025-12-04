@@ -34,6 +34,7 @@ func (r *Renderer) Apanel(sentFrom *botmodels.User, user *models.User) *bot.Send
 		ParseMode: "html",
 		ReplyMarkup: botmodels.InlineKeyboardMarkup{
 			InlineKeyboard: [][]botmodels.InlineKeyboardButton{
+				{{Text: "Добавить меню", CallbackData: "addMenu"}},
 				{{Text: "Список пользователей", CallbackData: "listUserCategories"}},
 				{{Text: "Добавить администратора", CallbackData: "newAdminInvite"}},
 				{{Text: "❌ (закрыть)", CallbackData: "deleteMessage"}},
